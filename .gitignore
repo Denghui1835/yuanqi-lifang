@@ -1,0 +1,12 @@
+# Office 锁文件（WPS/Word 打开文档时生成）
+~$*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 临时与验证产物
+_*.txt
+*.tmp
