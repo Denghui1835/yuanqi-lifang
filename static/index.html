@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>元气立方 · 小元</title>
+<style>
+  :root{
+    --paper:#f6f2ea; --surface:#fffdf8; --line:#e6dfd2;
+    --ink:#2c2823; --ink-2:#5c554c; --muted:#938b7f;
+    --jade:#4f7a63; --jade-soft:#e8f0ea;
+    --cinnabar:#b0423c; --cinnabar-soft:#fbeeed;
+    --amber:#b8863b;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(44,40,35,.05), 0 6px 20px rgba(44,40,35,.05);
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--paper); color:var(--ink);
+    font:15px/1.7 -apple-system,"PingFang SC","Microsoft YaHei","Source Han Sans SC",system-ui,sans-serif;
+    display:flex; flex-direction:column; height:100vh; overflow:hidden;
+  }
+
+  /* ---------- 顶栏 ---------- */
+  header{
+    display:flex; align-items:center; gap:12px;
+    padding:14px 24px; background:var(--surface); border-bottom:1px solid var(--line);
+    flex:0 0 auto;
+  }
+  .logo{
+    width:32px;height:32px;border-radius:9px;flex:0 0 auto;
+    background:linear-gradient(150deg,var(--jade),#3d6350);
+    display:grid;place-items:center;color:#fff;font-size:15px;font-weight:600;
+  }
+  .brand b{font-size:16px; letter-spacing:.5px}
+  .brand span{color:var(--muted); font-size:12.5px; margin-left:8px}
+  .tabs{margin-left:auto; display:flex; gap:4px; background:var(--paper); padding:3px; border-radius:10px}
+  .tabs button{
+    border:0; background:transparent; padding:6px 14px; border-radius:8px;
+    font:inherit; font-size:13.5px; color:var(--ink-2); cursor:pointer;
+  }
+  .tabs button.on{background:var(--surface); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .badge{
+    font-size:12px; color:var(--amber); background:#fdf6e8;
+    border:1px solid #f0e2c4; padding:3px 10px; border-radius:999px; margin-left:4px;
+  }
+
+  /* ---------- 主体 ---------- */
+  main{flex:1 1 auto; display:grid; grid-template-columns:1fr 380px; min-height:0}
+  .view{display:none; min-height:0}
+  .view.on{display:flex; flex-direction:column}
+
+  /* ---------- 对话 ---------- */
+  #chat-view{border-right:1px solid var(--line)}
+  #stream{flex:1 1 auto; overflow-y:auto; padding:26px 24px; scroll-behavior:smooth}
+  .msg{max-width:660px; margin:0 auto 20px; display:flex; gap:12px; align-items:flex-start}
+  .msg .who{
+    flex:0 0 auto; width:30px;height:30px;border-radius:9px; display:grid;place-items:center;
+    font-size:12.5px; font-weight:600; color:#fff; background:var(--jade);
+  }
+  .msg.user .who{background:#b8ada0}
+  .msg .bubble{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:13px 17px; white-space:pre-wrap; box-shadow:var(--shadow); flex:1 1 auto;
+  }
+  .msg.user{flex-direction:row-reverse}
+  .msg.user .bubble{background:#f0ece4; border-color:#e2dad0}
+  .msg .bubble .meta{display:block; font-size:12px; color:var(--muted); margin-top:9px}
+
+  .crisis-box{
+    max-width:660px; margin:0 auto 20px; padding:16px 20px; border-radius:var(--radius);
+    background:var(--cinnabar-soft); border:1px solid #ecc9c6;
+  }
+  .crisis-box b{color:var(--cinnabar); display:block; margin-bottom:8px; font-size:14px}
+  .crisis-box .hot{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13.5px; line-height:2}
+
+  /* ---------- 输入 ---------- */
+  .composer{flex:0 0 auto; padding:14px 24px 20px; border-top:1px solid var(--line); background:var(--surface)}
+  .composer .inner{max-width:660px; margin:0 auto; display:flex; gap:10px; align-items:flex-end}
+  textarea{
+    flex:1 1 auto; resize:none; border:1px solid var(--line); background:var(--paper);
+    border-radius:12px; padding:13px 15px; font:inherit; color:var(--ink);
+    max-height:150px; min-height:48px; outline:none;
+  }
+  textarea:focus{border-color:var(--jade); background:var(--surface)}
+  #send{
+    flex:0 0 auto; border:0; border-radius:12px; padding:0 22px; height:48px;
+    background:var(--jade); color:#fff; font:inherit; font-weight:500; cursor:pointer;
+  }
+  #send:disabled{opacity:.45; cursor:default}
+  .hint{max-width:660px; margin:9px auto 0; font-size:12px; color:var(--muted)}
+
+  /* ---------- 侧栏 ---------- */
+  aside{overflow-y:auto; padding:22px 20px; background:var(--paper); min-height:0}
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 18px; margin-bottom:14px; box-shadow:var(--shadow);
+  }
+  .card h3{font-size:13px; color:var(--jade); letter-spacing:.6px; margin-bottom:10px; font-weight:600}
+  .card h4{font-size:15.5px; margin-bottom:4px}
+  .card .sub{font-size:12.5px; color:var(--muted); margin-bottom:10px}
+  .term-name{font-size:20px; font-weight:600; letter-spacing:2px}
+  .quote{font-size:14.5px; line-height:1.9; color:var(--ink); border-left:3px solid var(--jade-soft); padding-left:12px; margin:10px 0}
+  .quote .src{display:block; font-size:12px; color:var(--muted); margin-top:6px}
+  .dim{margin-top:10px}
+  .dim .lab{
+    display:inline-block; font-size:11.5px; color:var(--jade); background:var(--jade-soft);
+    padding:2px 9px; border-radius:6px; margin-bottom:5px;
+  }
+  .dim li{list-style:none; font-size:13.5px; color:var(--ink-2); padding-left:14px; position:relative; margin:3px 0}
+  .dim li::before{content:"·"; position:absolute; left:4px; color:var(--muted)}
+  .avoid{font-size:12.5px; color:var(--cinnabar); background:var(--cinnabar-soft);
+    padding:7px 11px; border-radius:8px; margin-top:10px}
+  .empty{font-size:13px; color:var(--muted); text-align:center; padding:22px 0}
+
+  /* ---------- 手册 ---------- */
+  #kb-view{overflow-y:auto; padding:26px 28px; display:block}
+  #kb-view.on{display:block}
+  .kb-wrap{max-width:1080px; margin:0 auto}
+  .kb-sec{margin-bottom:34px}
+  .kb-sec > h3{font-size:16px; margin-bottom:14px; padding-bottom:8px; border-bottom:2px solid var(--line)}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(238px,1fr)); gap:12px}
+  .mini{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 16px}
+  .mini b{font-size:14.5px}
+  .mini p{font-size:13px; color:var(--ink-2); margin-top:6px}
+  .mini .k{font-size:11.5px; color:var(--jade); background:var(--jade-soft); padding:2px 8px;
+    border-radius:6px; margin-top:9px; display:inline-block}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; background:var(--surface);
+    border-radius:10px; overflow:hidden; border:1px solid var(--line)}
+  th,td{padding:9px 12px; text-align:left; border-bottom:1px solid var(--line)}
+  th{background:var(--jade-soft); color:var(--jade); font-weight:600; font-size:13px}
+  tr:last-child td{border-bottom:0}
+
+  @media (max-width:920px){
+    main{grid-template-columns:1fr}
+    aside{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">元</div>
+  <div class="brand"><b>元气立方</b><span>小元 · 健康陪伴</span></div>
+  <div class="badge" id="term-badge">—</div>
+  <div class="tabs">
+    <button class="on" data-v="chat-view">对话</button>
+    <button data-v="kb-view">调理手册</button>
+  </div>
+</header>
+
+<main>
+  <!-- 对话 -->
+  <section id="chat-view" class="view on">
+    <div id="stream">
+      <div class="msg xy"><div class="who">元</div><div class="bubble" id="hello">正在准备…</div></div>
+    </div>
+    <div class="composer">
+      <div class="inner">
+        <textarea id="input" rows="1" placeholder="今天过得怎么样？开心的、烦的，都可以说给我听…"></textarea>
+        <button id="send">发送</button>
+      </div>
+      <div class="hint">小元不提供诊断与治疗建议。涉及疾病请就医；如有自伤念头，请立即联系身边可信任的人或拨打 12356。</div>
+    </div>
+  </section>
+
+  <!-- 侧栏 -->
+  <aside id="side">
+    <div class="card" id="daily-card"><h3>今日日签</h3><div class="empty">载入中…</div></div>
+    <div class="card" id="rx-card">
+      <h3>调理卡</h3>
+      <div class="empty">和小元聊聊，这里会出现针对你状态的调理建议</div>
+    </div>
+  </aside>
+
+  <!-- 手册 -->
+  <section id="kb-view" class="view">
+    <div class="kb-wrap" id="kb-wrap"></div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+let history = [];
+let busy = false;
+
+/* ---------- 视图切换 ---------- */
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === b.dataset.v));
+});
+
+/* ---------- 渲染 ---------- */
+function bubble(role, text, meta) {
+  const d = document.createElement('div');
+  d.className = 'msg ' + (role === 'user' ? 'user' : 'xy');
+  d.innerHTML = `<div class="who">${role === 'user' ? '我' : '元'}</div>
+                 <div class="bubble">${esc(text)}${meta ? `<span class="meta">${meta}</span>` : ''}</div>`;
+  $('#stream').appendChild(d);
+  $('#stream').scrollTop = 1e9;
+}
+function esc(s) {
+  return (s || '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+}
+
+function crisisBox(level) {
+  const d = document.createElement('div');
+  d.className = 'crisis-box';
+  d.innerHTML = `<b>${level === 'high' ? '⚠ 已触发紧急响应' : '⚠ 已切换到关怀模式'}</b>
+    <div>小元已经停止一切养生建议，转为陪伴与转介。请认真对待这件事。</div>
+    <div class="hot">
+      全国心理援助热线　12356（24 小时）<br>
+      北京心理危机研究与干预中心　010-82951332<br>
+      青少年服务台　12355
+    </div>`;
+  $('#stream').appendChild(d);
+  $('#stream').scrollTop = 1e9;
+}
+
+function renderCards(cards) {
+  const box = $('#rx-card');
+  if (!cards || !cards.length) return;
+  box.innerHTML = '<h3>调理卡</h3>' + cards.map(c => {
+    const dims = (c.dims || []).map(d =>
+      `<div class="dim"><span class="lab">${esc(d.label)}</span><ul>${d.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>`
+    ).join('');
+    const avoid = (c.avoid && c.avoid.length)
+      ? `<div class="avoid">注意：${c.avoid.map(esc).join('；')}</div>` : '';
+    return `<div style="padding:12px 0;border-bottom:1px solid var(--line)">
+      <h4>${esc(c.title)}</h4>
+      <div class="sub">${esc(c.subtitle || '')}</div>
+      ${c.line ? `<div style="font-size:13.5px;color:var(--ink-2)">${esc(c.line)}</div>` : ''}
+      ${dims}${avoid}</div>`;
+  }).join('');
+}
+
+/* ---------- 对话 ---------- */
+async function send() {
+  const el = $('#input');
+  const text = el.value.trim();
+  if (!text || busy) return;
+  el.value = ''; el.style.height = 'auto';
+  busy = true; $('#send').disabled = true;
+
+  bubble('user', text);
+  history.push({ role: 'user', content: text });
+
+  const wait = document.createElement('div');
+  wait.className = 'msg xy';
+  wait.innerHTML = '<div class="who">元</div><div class="bubble">小元正在想…</div>';
+  $('#stream').appendChild(wait);
+  $('#stream').scrollTop = 1e9;
+
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: history })
+    });
+    const data = await r.json();
+    wait.remove();
+
+    const meta = (data.diagnosis && data.diagnosis.patterns.length)
+      ? '判断倾向：' + data.diagnosis.patterns.map(p => p.name).join('、')
+      : '';
+    bubble('xy', data.reply, meta);
+    history.push({ role: 'assistant', content: data.reply });
+
+    if (data.crisis) crisisBox(data.crisis);
+    renderCards(data.cards);
+
+    if (data.error) console.warn('后端错误：', data.error);
+  } catch (e) {
+    wait.remove();
+    bubble('xy', '（网络出了点问题，再试一次？）');
+    console.error(e);
+  } finally {
+    busy = false; $('#send').disabled = false; el.focus();
+  }
+}
+
+$('#send').onclick = send;
+$('#input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+$('#input').addEventListener('input', e => {
+  e.target.style.height = 'auto';
+  e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px';
+});
+
+/* ---------- 日签 ---------- */
+async function loadDaily() {
+  try {
+    const d = await (await fetch('/api/daily')).json();
+    $('#hello').textContent = d.greeting;
+    $('#term-badge').textContent = '今日 · ' + d.term.name;
+    $('#daily-card').innerHTML = `
+      <h3>今日日签 · ${esc(d.term.name)}</h3>
+      <div class="term-name">${esc(d.term.name)}<span style="font-size:12.5px;color:var(--muted);font-weight:400;margin-left:8px">${esc(d.term.date)}</span></div>
+      <div class="sub" style="margin-top:8px">气候：${esc(d.term.climate)}　·　易发情绪：${esc(d.term.mood)}</div>
+      <div style="font-size:13.5px;color:var(--ink-2)">养生要点：${esc(d.term.care)}</div>
+      <div class="quote">${esc(d.classic.quote)}<span class="src">${esc(d.classic.src)} —— ${esc(d.classic.plain)}</span></div>
+      <div style="font-size:13px;color:var(--jade)">今日行动：${esc(d.classic.action)}</div>`;
+  } catch (e) { console.error(e); }
+}
+
+/* ---------- 手册 ---------- */
+async function loadKb() {
+  const kb = await (await fetch('/api/kb')).json();
+  const c = (arr, f) => arr.map(f).join('');
+  $('#kb-wrap').innerHTML = `
+    <div class="kb-sec"><h3>身体维度 · 九种体质</h3><div class="grid">
+      ${c(kb.constitutions, x => `<div class="mini"><b>${esc(x.name)}</b>
+        <p>${x.features.map(esc).join('、')}</p>
+        <p style="color:var(--muted);font-size:12.5px">追问：${x.probes.map(esc).join('　')}</p></div>`)}
+    </div></div>
+
+    <div class="kb-sec"><h3>情绪维度 · 五种证型</h3><div class="grid">
+      ${c(kb.patterns, x => `<div class="mini"><b>${esc(x.name)}</b>
+        <div class="k">关联 ${esc(x.organ)}</div>
+        <p>${x.features.map(esc).join('、')}</p>
+        <p style="color:var(--muted)">食养：${x.diet.map(d => esc(d.name)).join('、')}</p>
+        <p style="color:var(--muted)">穴位：${x.acupoints.map(a => esc(a.name)).join('、')}</p>
+        <p style="color:var(--muted)">运动：${esc(x.exercise)}</p></div>`)}
+    </div></div>
+
+    <div class="kb-sec"><h3>八段锦 · 情绪运动处方</h3>
+      <table><tr><th>状态</th><th>招式组合</th><th>频率</th><th>要点</th></tr>
+      ${c(kb.baduanjin_rx, r => `<tr><td>${esc(r.state)}</td>
+        <td>${r.combo.map(i => esc(kb.baduanjin[i - 1].name)).join(' ＋ ')}</td>
+        <td>${esc(r.freq)}</td><td>${esc(r.note)}</td></tr>`)}
+      </table></div>
+
+    <div class="kb-sec"><h3>话术库 · 非暴力沟通四步</h3>
+      <table><tr><th>步骤</th><th>不该这么说</th><th>该这么说</th></tr>
+      ${c(kb.scripts.nvco, x => `<tr><td>${esc(x.step)}</td>
+        <td style="color:var(--muted)">${esc(x.bad)}</td>
+        <td style="color:var(--jade)">${esc(x.good)}</td></tr>`)}
+      </table></div>
+
+    <div class="kb-sec"><h3>每日经典 · 典籍选录</h3>
+      <table><tr><th>出处</th><th>原文</th><th>白话</th><th>今日行动</th></tr>
+      ${c(kb.classics, x => `<tr><td>${esc(x.src)}</td><td>${esc(x.quote)}</td>
+        <td>${esc(x.plain)}</td><td>${esc(x.action)}</td></tr>`)}
+      </table></div>
+
+    <div class="kb-sec"><h3>24 节气 · 情绪调适速查</h3>
+      <table><tr><th>节气</th><th>时间</th><th>气候特点</th><th>易发情绪</th><th>养生要点</th></tr>
+      ${c(kb.solar_terms, x => `<tr><td>${esc(x.name)}</td><td>${esc(x.date)}</td>
+        <td>${esc(x.climate)}</td><td>${esc(x.mood)}</td><td>${esc(x.care)}</td></tr>`)}
+      </table></div>`;
+}
+
+loadDaily();
+loadKb();
+$('#input').focus();
+</script>
+</body>
+</html>

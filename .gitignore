@@ -10,3 +10,6 @@ venv/
 # 临时与验证产物
 _*.txt
 *.tmp
+
+# 运行日志
+server.log
